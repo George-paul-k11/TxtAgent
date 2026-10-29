@@ -134,10 +134,9 @@ def load_dotenv(path: Path) -> None:
             os.environ.setdefault(key, value)
 
 
-def read_text(path: Path) -> str:
-    data = path.read_bytes()
+def decode_text(data: bytes, source: str = "文件") -> str:
     if not data.strip():
-        raise ClassifyError(f"文件是空的：{path}")
+        raise ClassifyError(f"{source}是空的")
     for encoding in ("utf-8-sig", "utf-8", "gbk"):
         try:
             text = data.decode(encoding)
@@ -148,8 +147,12 @@ def read_text(path: Path) -> str:
         text = data.decode("utf-8", errors="replace")
     text = text.strip()
     if not text:
-        raise ClassifyError(f"文件里没有可分类的文字：{path}")
+        raise ClassifyError(f"{source}里没有可分类的文字")
     return text
+
+
+def read_text(path: Path) -> str:
+    return decode_text(path.read_bytes(), f"文件 {path}")
 
 
 def message_text(message: dict) -> str:
@@ -255,24 +258,35 @@ def parse_result(raw: str) -> tuple[list[str], list[str]]:
     return ordered, items
 
 
-def classify_text(
-    text: str,
+def resolve_api_key(explicit: str | None = None) -> str:
+    """读取百炼 API Key。调用方传入的值优先，其次是环境变量。"""
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+    return explicit or os.environ.get(
+        "DASHSCOPE_API_KEY",
+        "sk-ws-H.YDPYELE.TVGQ.MEQCIGE_55g6r0KNzs0jwhHB1zBBknGUIA6xuX1Ht6_riJGZAiB8HgvY_aF5hEOpappQFn8MEmsn98wuGOtsg7wyXJRcNA",
+    )
+
+
+def chat_completion(
+    system: str,
+    user: str,
     *,
     api_key: str,
     base_url: str = DEFAULT_BASE_URL,
     model: str = MODEL,
     timeout: float = 120,
-) -> tuple[list[str], list[str]]:
-    """调用 qwen3.7-flash，返回标签列表和待办事项。没有待办时事项列表为空。"""
+    max_tokens: int = 512,
+) -> str:
+    """调用千问，只返回回复正文。"""
     url = base_url.rstrip("/") + "/chat/completions"
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text},
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
         ],
         "temperature": 0,
-        "max_tokens": 512,
+        "max_tokens": max_tokens,
         "enable_thinking": False,
     }
     request = urllib.request.Request(
@@ -297,7 +311,28 @@ def classify_text(
         message = body["choices"][0]["message"]
     except (KeyError, IndexError, TypeError) as exc:
         raise ClassifyError(f"模型返回格式异常：{body}") from exc
-    return parse_result(message_text(message))
+    return message_text(message)
+
+
+def classify_text(
+    text: str,
+    *,
+    api_key: str,
+    base_url: str = DEFAULT_BASE_URL,
+    model: str = MODEL,
+    timeout: float = 120,
+) -> tuple[list[str], list[str]]:
+    """调用 qwen3.7-flash，返回标签列表和待办事项。没有待办时事项列表为空。"""
+    raw = chat_completion(
+        SYSTEM_PROMPT,
+        text,
+        api_key=api_key,
+        base_url=base_url,
+        model=model,
+        timeout=timeout,
+        max_tokens=512,
+    )
+    return parse_result(raw)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -330,7 +365,7 @@ def main(argv: list[str] | None = None) -> int:
 
     load_dotenv(Path(__file__).resolve().parent / ".env")
     args = build_parser().parse_args(argv)
-    api_key = args.api_key or os.environ.get("DASHSCOPE_API_KEY", "sk-ws-H.YDPYELE.TVGQ.MEQCIGE_55g6r0KNzs0jwhHB1zBBknGUIA6xuX1Ht6_riJGZAiB8HgvY_aF5hEOpappQFn8MEmsn98wuGOtsg7wyXJRcNA")
+    api_key = resolve_api_key(args.api_key)
     if not api_key:
         print("缺少 DASHSCOPE_API_KEY。请在环境变量或 .env 中填写百炼 API Key。", file=sys.stderr)
         return 1

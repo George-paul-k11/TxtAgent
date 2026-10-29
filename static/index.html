@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文案分类</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f4f6f8;
+      color: #1c2430;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+    }
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    p.lead {
+      margin: 0 0 24px;
+      color: #526072;
+    }
+    form, .result {
+      background: #fff;
+      border: 1px solid #e2e8ee;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input[type="text"], input[type="datetime-local"], input[type="file"] {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 16px;
+    }
+    input[type="text"], input[type="datetime-local"] {
+      border: 1px solid #c9d3de;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: #1769e0;
+      color: #fff;
+      font: inherit;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .result {
+      margin-top: 16px;
+    }
+    .tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 12px;
+    }
+    .tag {
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #e8eef8;
+    }
+    .success {
+      color: #0d7a45;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+    .error {
+      color: #b42318;
+    }
+    ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>文案分类</h1>
+    <p class="lead">上传一段文字。待办、速记、打卡可以同时出现。对上进行中的任务并有完成打卡的意向时，会提示打卡成功。</p>
+    <form id="form">
+      <label for="user_id">用户 ID</label>
+      <input id="user_id" name="user_id" type="text" inputmode="numeric" required placeholder="例如 591">
+      <label for="written_at">文案书写时间</label>
+      <input id="written_at" name="written_at" type="datetime-local" required>
+      <label for="file">文本文件</label>
+      <input id="file" name="file" type="file" accept=".txt,text/plain" required>
+      <button type="submit">开始识别</button>
+    </form>
+    <section class="result" id="result" hidden></section>
+  </main>
+  <script>
+    const writtenAt = document.querySelector("#written_at");
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    writtenAt.value = now.toISOString().slice(0, 16);
+
+    const form = document.querySelector("#form");
+    const result = document.querySelector("#result");
+    const button = form.querySelector("button");
+
+    function addText(parent, tag, text, className) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      node.textContent = text;
+      parent.appendChild(node);
+      return node;
+    }
+
+    function addList(parent, title, values) {
+      if (!values.length) return;
+      addText(parent, "h2", title);
+      const list = document.createElement("ul");
+      values.forEach((value) => addText(list, "li", value));
+      parent.appendChild(list);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      result.hidden = false;
+      result.replaceChildren();
+      addText(result, "p", "正在识别…");
+      try {
+        const response = await fetch("/api/classify", { method: "POST", body: new FormData(form) });
+        const data = await response.json();
+        result.replaceChildren();
+        if (!response.ok) {
+          addText(result, "p", data.error || "识别失败", "error");
+          return;
+        }
+        addText(result, "h2", "标签");
+        const tags = document.createElement("div");
+        tags.className = "tags";
+        const labels = data.labels || [];
+        if (!labels.length) addText(tags, "span", "无");
+        labels.forEach((label) => addText(tags, "span", label, "tag"));
+        result.appendChild(tags);
+        if (data.checkin_success) addText(result, "p", data.message, "success");
+        addList(result, "打卡任务", (data.matched_tasks || []).map((task) => task.task_name));
+        addList(result, "待办事项", data.items || []);
+      } catch (error) {
+        result.replaceChildren();
+        addText(result, "p", "请求失败：" + error.message, "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

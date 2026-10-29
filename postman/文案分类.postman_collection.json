@@ -1,0 +1,334 @@
+{
+  "info": {
+    "name": "文案分类",
+    "description": "本地接口 POST /api/classify。先启动 python server.py。用户 591 的进行中任务包含「跑步训练」。Body 选择 form-data，file 指向 postman/files 里的文本。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5050"
+    }
+  ],
+  "item": [
+    {
+      "name": "打卡成功",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "591",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/checkin.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "文案：今天跑步训练打卡完成了。对上用户 591 的任务「跑步训练」，并且有完成打卡的意向。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('返回打卡成功', function () {",
+              "    pm.expect(body.checkin_success).to.eql(true);",
+              "    pm.expect(body.message).to.eql('打卡成功');",
+              "    pm.expect(body.labels).to.include('打卡');",
+              "    pm.expect(body.labels).to.include('速记');",
+              "    pm.expect(body.matched_tasks.map(item => item.task_name)).to.include('跑步训练');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "只标速记",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "591",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/note.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "文案：我心情很好。没有待办，也没有打卡意向。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('只有速记', function () {",
+              "    pm.expect(body.labels).to.eql(['速记']);",
+              "    pm.expect(body.checkin_success).to.eql(false);",
+              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.matched_tasks).to.eql([]);",
+              "    pm.expect(body.items).to.eql([]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "只标待办",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "591",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/todo.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "文案：我下午要去跑步训练。提到了任务名，但只是将要去做，没有完成打卡的意向。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('只标待办', function () {",
+              "    pm.expect(body.labels).to.include('待办');",
+              "    pm.expect(body.labels).to.not.include('打卡');",
+              "    pm.expect(body.checkin_success).to.eql(false);",
+              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.items.join('')).to.include('跑步');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "待办速记打卡同时存在",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "591",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/mixed.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "文案：我心情很好。今天跑步训练打卡了。明天要早起。三个标签同时存在。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('三个标签同时存在', function () {",
+              "    pm.expect(body.labels).to.include('待办');",
+              "    pm.expect(body.labels).to.include('速记');",
+              "    pm.expect(body.labels).to.include('打卡');",
+              "    pm.expect(body.checkin_success).to.eql(true);",
+              "    pm.expect(body.message).to.eql('打卡成功');",
+              "    pm.expect(body.matched_tasks.map(item => item.task_name)).to.include('跑步训练');",
+              "    pm.expect(body.items.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "没有进行中任务",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "999999999",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/checkin.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "同一句打卡文案，但该用户没有 task_status 为 1 的未删除任务，所以不打卡。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('不打卡', function () {",
+              "    pm.expect(body.checkin_success).to.eql(false);",
+              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.labels).to.not.include('打卡');",
+              "    pm.expect(body.matched_tasks).to.eql([]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "user_id 不是数字",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "abc",
+              "type": "text"
+            },
+            {
+              "key": "written_at",
+              "value": "2026-10-29 16:47:00",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "e:/code/agent/postman/files/note.txt"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "user_id 必须是数字。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('提示 user_id', function () {",
+              "    pm.expect(body.error).to.include('user_id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "缺少文本文件",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "user_id",
+              "value": "591",
+              "type": "text"
+            }
+          ]
+        },
+        "url": "{{baseUrl}}/api/classify",
+        "description": "只传 user_id，不传 file。"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('状态码 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('提示上传文件', function () {",
+              "    pm.expect(body.error).to.include('文件');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
