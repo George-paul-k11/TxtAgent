@@ -39,12 +39,12 @@
       margin-bottom: 6px;
       font-weight: 600;
     }
-    input[type="text"], input[type="datetime-local"], input[type="file"] {
+    input[type="text"], input[type="datetime-local"], input[type="file"], select {
       width: 100%;
       box-sizing: border-box;
       margin-bottom: 16px;
     }
-    input[type="text"], input[type="datetime-local"] {
+    input[type="text"], input[type="datetime-local"], select {
       border: 1px solid #c9d3de;
       border-radius: 8px;
       padding: 10px 12px;
@@ -96,6 +96,11 @@
     <h1>文案分类</h1>
     <p class="lead">上传一段文字。待办、速记、打卡可以同时出现。对上进行中的任务并有完成打卡的意向时，会提示打卡成功。</p>
     <form id="form">
+      <label for="lang">语言 Lang</label>
+      <select id="lang" name="lang">
+        <option value="zh-CN">zh-CN</option>
+        <option value="en-US">en-US</option>
+      </select>
       <label for="user_id">用户 ID</label>
       <input id="user_id" name="user_id" type="text" inputmode="numeric" required placeholder="例如 591">
       <label for="written_at">文案书写时间</label>
@@ -132,6 +137,14 @@
       parent.appendChild(list);
     }
 
+    function withTimezone(localValue) {
+      const date = new Date(localValue);
+      const pad = (number) => String(Math.trunc(Math.abs(number))).padStart(2, "0");
+      const offsetMinutes = -date.getTimezoneOffset();
+      const sign = offsetMinutes >= 0 ? "+" : "-";
+      return localValue + ":00" + sign + pad(offsetMinutes / 60) + ":" + pad(offsetMinutes % 60);
+    }
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       button.disabled = true;
@@ -139,11 +152,18 @@
       result.replaceChildren();
       addText(result, "p", "正在识别…");
       try {
-        const response = await fetch("/api/classify", { method: "POST", body: new FormData(form) });
+        const body = new FormData(form);
+        body.delete("lang");
+        body.set("written_at", withTimezone(writtenAt.value));
+        const response = await fetch("/api/classify", {
+          method: "POST",
+          headers: { Lang: document.querySelector("#lang").value },
+          body,
+        });
         const data = await response.json();
         result.replaceChildren();
         if (!response.ok) {
-          addText(result, "p", data.error || "识别失败", "error");
+          addText(result, "p", data.msg || "识别失败", "error");
           return;
         }
         addText(result, "h2", "标签");
@@ -153,7 +173,7 @@
         if (!labels.length) addText(tags, "span", "无");
         labels.forEach((label) => addText(tags, "span", label, "tag"));
         result.appendChild(tags);
-        if (data.checkin_success) addText(result, "p", data.message, "success");
+        addText(result, "p", data.msg, data.checkin_success ? "success" : "");
         addList(result, "打卡任务", (data.matched_tasks || []).map((task) => task.task_name));
         addList(result, "待办事项", data.items || []);
       } catch (error) {

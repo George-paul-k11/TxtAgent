@@ -112,6 +112,49 @@ SYSTEM_PROMPT = """你是文案分类与待办抽取器。阅读用户给出的�
 输入：今天阳光很好，坐在窗边很舒服。
 输出：
 速记
+
+输入：I'm in a good mood. I'll have lunch this afternoon and sleep tomorrow.
+输出：
+待办
+速记
+下午要吃饭
+明天要睡觉
+
+输入：I'll have lunch this afternoon.
+输出：
+待办
+下午要吃饭
+
+输入：I'm in a good mood.
+输出：
+速记
+
+输入：
+Alex: What are you doing this afternoon?
+Blair: I'll drop off the report.
+输出：
+待办
+Blair下午要交报告
+"""
+
+_ZH_OUTPUT = """补充要求：
+中文和英文文案都按上面的规则分类。标签仍然只能写「待办」或「速记」。
+待办事项用中文短句。"""
+
+_EN_OUTPUT = """补充要求：
+Classify both Chinese and English text with the same rules. Labels must still be exactly 「待办」 or 「速记」. Do not translate the labels.
+Write each to-do item in English, not Chinese. Keep the same short-item style, for example "Have lunch this afternoon", "Sleep tomorrow", "Buy milk", "Blair drops off the report this afternoon".
+
+输入：I'm in a good mood. I'll have lunch this afternoon and sleep tomorrow.
+输出：
+待办
+速记
+Have lunch this afternoon
+Sleep tomorrow
+
+输入：I'm in a good mood.
+输出：
+速记
 """
 
 
@@ -321,11 +364,13 @@ def classify_text(
     base_url: str = DEFAULT_BASE_URL,
     model: str = MODEL,
     timeout: float = 120,
+    output_lang: str = "zh-CN",
 ) -> tuple[list[str], list[str]]:
-    """调用 qwen3.7-flash，返回标签列表和待办事项。没有待办时事项列表为空。"""
+    """调用 qwen3.7-flash，返回中文内部标签和待办事项。事项语言跟随 output_lang。"""
+    guide = _EN_OUTPUT if output_lang == "en-US" else _ZH_OUTPUT
     raw = chat_completion(
         SYSTEM_PROMPT,
-        text,
+        f"{guide}\n\n文案：\n{text}",
         api_key=api_key,
         base_url=base_url,
         model=model,

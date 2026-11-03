@@ -15,7 +15,12 @@
       "name": "打卡成功",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -26,7 +31,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -49,7 +54,7 @@
               "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
               "pm.test('返回打卡成功', function () {",
               "    pm.expect(body.checkin_success).to.eql(true);",
-              "    pm.expect(body.message).to.eql('打卡成功');",
+              "    pm.expect(body.msg).to.eql('打卡成功');",
               "    pm.expect(body.labels).to.include('打卡');",
               "    pm.expect(body.labels).to.include('速记');",
               "    pm.expect(body.matched_tasks.map(item => item.task_name)).to.include('跑步训练');",
@@ -63,7 +68,12 @@
       "name": "只标速记",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -74,7 +84,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -98,7 +108,7 @@
               "pm.test('只有速记', function () {",
               "    pm.expect(body.labels).to.eql(['速记']);",
               "    pm.expect(body.checkin_success).to.eql(false);",
-              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.msg).to.eql('识别完成');",
               "    pm.expect(body.matched_tasks).to.eql([]);",
               "    pm.expect(body.items).to.eql([]);",
               "});"
@@ -111,7 +121,12 @@
       "name": "只标待办",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -122,7 +137,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -147,7 +162,7 @@
               "    pm.expect(body.labels).to.include('待办');",
               "    pm.expect(body.labels).to.not.include('打卡');",
               "    pm.expect(body.checkin_success).to.eql(false);",
-              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.msg).to.eql('识别完成');",
               "    pm.expect(body.items.join('')).to.include('跑步');",
               "});"
             ]
@@ -159,7 +174,12 @@
       "name": "待办速记打卡同时存在",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -170,7 +190,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -196,7 +216,7 @@
               "    pm.expect(body.labels).to.include('速记');",
               "    pm.expect(body.labels).to.include('打卡');",
               "    pm.expect(body.checkin_success).to.eql(true);",
-              "    pm.expect(body.message).to.eql('打卡成功');",
+              "    pm.expect(body.msg).to.eql('打卡成功');",
               "    pm.expect(body.matched_tasks.map(item => item.task_name)).to.include('跑步训练');",
               "    pm.expect(body.items.length).to.be.above(0);",
               "});"
@@ -209,7 +229,12 @@
       "name": "没有进行中任务",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -220,7 +245,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -243,7 +268,7 @@
               "pm.test('状态码 200', function () { pm.response.to.have.status(200); });",
               "pm.test('不打卡', function () {",
               "    pm.expect(body.checkin_success).to.eql(false);",
-              "    pm.expect(body.message).to.eql('');",
+              "    pm.expect(body.msg).to.eql('识别完成');",
               "    pm.expect(body.labels).to.not.include('打卡');",
               "    pm.expect(body.matched_tasks).to.eql([]);",
               "});"
@@ -256,7 +281,12 @@
       "name": "user_id 不是数字",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -267,7 +297,7 @@
             },
             {
               "key": "written_at",
-              "value": "2026-10-29 16:47:00",
+              "value": "2026-10-29T16:47:00+08:00",
               "type": "text"
             },
             {
@@ -289,7 +319,7 @@
               "const body = pm.response.json();",
               "pm.test('状态码 400', function () { pm.response.to.have.status(400); });",
               "pm.test('提示 user_id', function () {",
-              "    pm.expect(body.error).to.include('user_id');",
+              "    pm.expect(body.msg).to.include('user_id');",
               "});"
             ]
           }
@@ -300,7 +330,12 @@
       "name": "缺少文本文件",
       "request": {
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Lang",
+            "value": "zh-CN"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
@@ -323,7 +358,7 @@
               "const body = pm.response.json();",
               "pm.test('状态码 400', function () { pm.response.to.have.status(400); });",
               "pm.test('提示上传文件', function () {",
-              "    pm.expect(body.error).to.include('文件');",
+              "    pm.expect(body.msg).to.include('文件');",
               "});"
             ]
           }

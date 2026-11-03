@@ -34,6 +34,22 @@ CHECKIN_PROMPT = """你负责判断文案是不是在给给定任务打卡。不
 输出：
 每周跑步
 每天阅读
+
+任务：Running workout、Read every day
+文案：I checked in for my running workout today.
+输出：
+Running workout
+
+任务：Running workout、Read every day
+文案：I'm going for a run this afternoon.
+输出：
+无
+
+任务：Running workout、Read every day
+文案：I finished reading today and also checked in for my running workout.
+输出：
+Read every day
+Running workout
 """
 
 _ITEM_PREFIX = re.compile(r"^(?:[-*•·]+|\d+\s*[.、．)）]\s*)")
