@@ -19,6 +19,7 @@ from checkin import match_checkins
 from classify import ClassifyError, classify_text, decode_text, load_dotenv, resolve_api_key
 from db import DatabaseError, fetch_open_tasks, tasks_covering
 from i18n import LABEL_ORDER, ApiError, display_labels, resolve_lang, result_msg, text
+from note import NOTE_SECTION_KINDS, generate_note, note_to_blocks
 
 ROOT = Path(__file__).resolve().parent
 MAX_FILE_BYTES = 1_000_000
@@ -131,6 +132,14 @@ def classify_upload():
             model=model,
             output_lang=lang,
         )
+        note_body = generate_note(
+            content,
+            api_key=api_key,
+            base_url=base_url,
+            model=model,
+            output_lang=lang,
+            fallback_todos=items,
+        )
         matched = match_checkins(
             content,
             tasks,
@@ -155,6 +164,8 @@ def classify_upload():
             "checkin_success": success,
             "msg": result_msg(lang, checkin_success=success, labels=ordered),
             "matched_tasks": matched,
+            "note_section_kinds": list(NOTE_SECTION_KINDS),
+            "note_blocks": note_to_blocks(note_body),
         }
     )
 

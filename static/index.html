@@ -176,6 +176,34 @@
         addText(result, "p", data.msg, data.checkin_success ? "success" : "");
         addList(result, "打卡任务", (data.matched_tasks || []).map((task) => task.task_name));
         addList(result, "待办事项", data.items || []);
+        const blocks = data.note_blocks || [];
+        if (blocks.length) {
+          addText(result, "h2", "笔记");
+          const kindTitle = {
+            title: "标题",
+            introduction: "引言",
+            summary: "摘要",
+            key_points: "要点",
+            decisions: "决策",
+            chapters: "章节",
+            todos: "待办",
+          };
+          blocks.forEach((block) => {
+            const label = kindTitle[block.kind] || block.kind;
+            const content = block.content;
+            if (Array.isArray(content)) {
+              addList(result, label, content);
+              return;
+            }
+            if (!content) return;
+            if (block.kind === "title") {
+              addText(result, "h3", content);
+              return;
+            }
+            addText(result, "h3", label);
+            addText(result, "p", content);
+          });
+        }
       } catch (error) {
         result.replaceChildren();
         addText(result, "p", "请求失败：" + error.message, "error");
